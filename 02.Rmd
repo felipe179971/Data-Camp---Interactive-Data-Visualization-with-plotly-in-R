@@ -1,0 +1,160 @@
+# Modelando e personalizando seus gráficos  
+  
+## Personalize seus traços  
+  
+### Cor e opacidade  
+  
+Aumentar a transparência (ou seja, diminuir a opacidade) de um rastreamento pode ajudar a melhorar sua legibilidade. Por exemplo, se houver barras de alturas semelhantes em gráficos de barras ou histogramas, aumentar a transparência permite ver as linhas de grade horizontais atrás das barras, facilitando o julgamento das alturas relativas. Obviamente, as informações instantâneas podem esclarecer isso, mas por que não facilitar o máximo possível para o seu leitor?  
+  
+Neste exercício, você adaptará o **plotly** código para alterar a cor de um histograma e aumentar sua transparência.  
+  
+```{r}
+#Adapte o código para que as barras do histograma sejam "navy"e sejam 50% transparentes.
+vgsales2016<-vgsales%>%filter(Year==2016)
+vgsales2016%>%plot_ly(x=~Critic_Score)%>%add_histogram(color=I('navy'),opacity = 0.5)%>%layout(title='Histograma com cor navy e 50% de transparência', xaxis=list(title='Notas dos Críticos de Videogame (2016)'))
+```
+  
+### Formatos alternativos de cores  
+  
+R tem um grande número de cores nomeadas, mas às vezes você precisa de uma cor que não seja nomeada. Por exemplo, e se o tom específico de azul da sua organização estiver entre **"navy"** e **"dodgerblue4"**? Felizmente, **plotly** permite especificar cores usando outros formatos, incluindo RGB, RGBA, HEX, HCL, HSL e HSV.  
+  
+Neste exercício, você alterará a cor do histograma para usar os formatos HEX e RGB.  
+  
+```{r}
+#Use a função as is para definir coloro histograma como #111e6c.
+vgsales2016%>%plot_ly(x=~Critic_Score)%>%add_histogram(color=I('#111e6c'), opacity=1)%>%layout(title='Histograma com cor #111e6c',xaxis=list(title='Notas dos Críticos de Videogame (2016)'))
+#Defina o histograma colorcomo "rgb(17, 30, 108)"através do markerargumento.
+vgsales2016%>%plot_ly(x=~Critic_Score)%>%add_histogram(marker=list(color="rgb(17, 30, 108)",opacity=1))%>%layout(title='Histograma com cor rgb(17, 30, 108)',xaxis=list(title='Notas dos Críticos de Videogame (2016)'))
+```
+   
+### Tamanho e símbolo  
+  
+Para alterar o tamanho e a forma padrão dos pontos em um gráfico de dispersão ou em caixa, passamos ao **marker** argumento uma lista com os argumentos **size** e **symbol**. Como você viu, alterar o símbolo de plotagem pode facilitar a leitura dos gráficos, abordando questões como a super plotagem. Diminuir o tamanho dos pontos também pode ajudar a superar pequenos problemas de overplotting - apenas não torne os pontos difíceis de ver!  
+  
+```{r}
+#Altere o símbolo de plotagem para um diamante e diminua o tamanho para 4.
+vgsales2016%>%plot_ly(x=~User_Score,y=~Critic_Score)%>%add_markers(marker=list(symbol='diamond',size=4))%>%layout(title='Gráfico de dispersão com marker diamonde tamanho 4',xaxis=list(title='Nota dos Críticos de Videogame'),yaxis=list(title='Notas dos Jogadores de Videogame'))
+```
+  
+## Uso atencioso da cor  
+  
+### Adicionando uma terceira variável  
+  
+Neste exercício, você adicionará cor a um gráfico de dispersão com base em uma terceira variável, em um esforço para explorar a relação entre a pontuação do usuário e a pontuação crítica dos videogames em 2016.  
+  
+```{r}
+#Altere a cor e o símbolo do marcador no gráfico de dispersão da pontuação do usuário ( User_Score) contra a pontuação do crítico ( Critic_Score) para representar Genre.
+#Use Dark2 emvez da paleta de cores padrão.
+vgsales2016%>%plot_ly(x=~Critic_Score,y=~User_Score,color=~Genre)%>%add_markers(colors='Dark2')%>%layout(title='Gráfico de dispersão com paleta de cores Dark2 variando de acordo com Genre',xaxis=list(title='Nota dos Críticos de Videogame'),yaxis=list(title='Notas dos Jogadores de Videogame'))
+```
+  
+### Além da cor: Símbolos  
+  
+Usar cor e forma para codificar uma variável categórica pode ser uma estratégia útil para revelar relacionamentos com mais eficácia. Essa estratégia de codificação dupla usa duas pistas visuais pré-atentas para comunicar mais rapidamente as informações ao leitor. Essa ideia é implementada por padrão em **plotly**; se você mapear uma variável para o símbolo, **plotly** mapeia automaticamente a variável para a cor.    
+   
+Para mapear uma variável para a forma de plotagem, adicione um **symbol** argumento ao **plot_ly()** comando.    
+  
+Cuidado: É uma prática inadequada usar cor e forma para comunicar variáveis diferentes, pois os dois recursos demonstraram interferir entre si, dificultando a distinção entre as duas variáveis.  
+  
+```{r}
+#Crie um gráfico de dispersão com Critic_Score no eixo x e no eixo User_Scorey onde o símbolo de plotagem representa o jogo Rating.
+vgsales2016%>%plot_ly(x=~Critic_Score,y=~User_Score,symbol=~Rating)%>%add_markers(colors='Dark2')%>%layout(title='Gráfico de dispersão com symbol variando de acordo com Rating',xaxis=list(title='Nota dos Críticos de Videogame'),yaxis=list(title='Notas dos Jogadores de Videogame'))
+```
+  
+### Transformando uma escala de cores  
+  
+Ao mapear uma variável numérica para cores, às vezes é necessário transformar a variável. Isso é especialmente verdadeiro se os valores das variáveis diferirem por uma ordem de magnitude ou mais.  
+  
+Neste exercício, você explorará como o número de usuários ajuda a explicar a relação entre as pontuações de usuários e críticos para videogames em 2016. Além disso, você explorará como a aplicação do log natural pode ajudar a tornar uma escala de cores mais interpretável.  
+  
+```{r}
+#Crie um gráfico de dispersão de User_Score contra Critic_Score, onde a cor representa User_Count.
+vgsales2016$User_Score<-as.numeric(vgsales2016$User_Score)
+vgsales2016%>%plot_ly(x=~Critic_Score, y=~User_Score, color=~User_Count)%>%add_markers()%>%layout(title='Gráfico de Dispersão onde a cor representa User_Count.',xaxis=list(title='Nota dos Críticos de Videogame'),yaxis=list(title='Número de Usuários'))
+
+#Recrie o gráfico de dispersão da pontuação do usuário contra a pontuação do crítico, mas a cor representa o log natural da contagem de usuários.
+vgsales2016%>%plot_ly(x=~Critic_Score, y=~User_Score, color=~log(User_Count))%>%add_markers()%>%layout(title='Gráfico de Dispersão onde a cor representa log(User_Count)',xaxis=list(title='Nota dos Críticos de Videogame'),yaxis=list(title='Número de Usuários'))
+
+```
+  
+## Informação instantânea  
+  
+$hoverinfo ="all", "x", "y", "x+y", "x+y+z"$ 
+  
+  
+### Removendo um pedaço de informação instantânea  
+  
+Para alguns tipos de gráfico, talvez você não queira todas as informações de foco exibidas por padrão. Os gráficos de barras são um excelente exemplo. Você pode ler facilmente os valores de agrupamento em um gráfico de barras, portanto, apenas exibir a altura da barra parece razoável.  
+  
+Neste exercício, sua tarefa é remover os rótulos da plataforma das informações instantâneas do gráfico de barras que exibe o número de jogos lançados para cada plataforma em 2016.  
+  
+```{r}
+#Crie um gráfico de barras mostrando como os jogos são distribuídos pelas plataformas no vgsales2016 conjunto de dados.
+#Use o hoverinfo argumento para exibir apenas a altura de cada barra.
+vgsales2016%>%count(Platform)%>%plot_ly(x=~Platform, y=~n, hoverinfo='y')%>%add_bars()%>%layout(title='Gráfico de Barras hoverinfo=y',xaxis=list(title='Plataformas'),yaxis=list(title=''))
+```
+  
+### Adicionando ao hoverinfo  
+  
+Durante a vídeo aula, você aprendeu como personalizar completamente as informações de foco exibidas por **plotly**. Essa é uma ótima abordagem, mas e se você quiser adicionar rapidamente uma coluna de identificação em vez de aperfeiçoar seu gráfico para publicação na Web? Isso é possível adicionando o **text** argumento ao **plot_ly()** comando sem especificar **hoverinfo = "text"**.  
+  
+```{r}
+#Crie um gráfico de dispersão da pontuação do usuário contra a pontuação crítica dos videogames vendidos em 2016.
+#Mapeie o nome de um videogame para o argumento de texto na plot_ly() camada para adicioná-lo às informações de foco.
+vgsales2016%>%plot_ly(x=~Critic_Score,y=~User_Score,hoverinfo='text',text=~Name)%>%add_markers()%>%layout(title='Gráfico de dispersão hoverinfo=Name',xaxis=list(title='Nota dos Críticos de Videogame'),yaxis=list(title='Nota dos Usuários de Videogame'))
+```
+  
+### Informações personalizadas  
+  
+Neste exercício, sua tarefa é personalizar as informações de foco instantâneo para ajudar a explorar a relação entre as vendas de videogames na América do Norte e as vendas de videogames na Europa em 2016.  
+  
+Depois de criar o gráfico e as informações de foco personalizado, tente identificar os videogames com a maior discrepância entre as vendas na América do Norte e na Europa.  
+  
+```{r}
+#Personalize a informação em foco text para incluir o nome e o valor para cada uma das seguintes variáveis (na ordem especificada): NA_Sales, EU_Sales, e Name.
+#Separe o nome e o valor com dois pontos. Por exemplo, a primeira linha deve estar sob a forma: NA_Sales: 41.4. (nome e valor)
+vgsales2016 %>%plot_ly(x = ~NA_Sales, y = ~EU_Sales,hoverinfo = "text",text = ~paste("NA_Sales:", NA_Sales,"<br>", "EU_Sales:",EU_Sales, "<br>", "Name:", Name)) %>%add_markers()%>%layout(title='Gráfico de dispersão hoverinfo=text personalizado',xaxis=list(title='Vendas de Videogames na América do Norte'),yaxis=list(title='Vendas de Videogames na Europa'))
+```
+  
+## Personalizando seu layout  
+  
+### Polindo um gráfico de dispersão   
+  
+Os videogames mais vendidos são geralmente bem recebidos pelos críticos? Para investigar essa pergunta, você criará um gráfico de dispersão da pontuação do crítico em relação às vendas globais.  
+  
+Como você viu, as vendas globais diferem por uma ordem de magnitude na distribuição. Nesses casos, é prudente explorar os dados em uma escala transformada. Neste exercício, exiba vendas globais na escala de log.  
+  
+Como sempre, não se esqueça de usar etiquetas informativas sobre os eixos!  
+  
+```{r}
+#Aplique uma transformação de log ao eixo x dentro do layout() comando.
+#Rotule o eixo x e o eixo "Global sales (millions of units)" y "Critic score".
+vgsales2016 %>%
+  plot_ly(x = ~Global_Sales, y = ~Critic_Score) %>%
+  add_markers(marker = list(opacity = 0.5)) %>%
+  layout(xaxis = list(title='Global sales (millions of units)', type = "log"),
+         yaxis = list(title='Critic score'))
+```
+  
+### Correspondendo a um tema  
+  
+Você já pode ter um tema para seus gráficos que gostaria de replicar **plotly**. Por exemplo, você pode preferir que seus gráficos de séries temporais tenham:  
+  
+Somente linhas de grade horizontais  
+Um plano de fundo cinza claro (**#ebebeb**) ao redor da plotagem  
+  
+Neste exercício, sua tarefa é adaptar o gráfico de séries temporais das vendas globais de videogame de 1980 a 2016 para que ele atenda a esses requisitos.  
+  
+```{r}
+#Remova as linhas de grade verticais alterando as xaxis opções.
+#Defina a cor de fundo para "#ebebeb".
+annual_vgsales<-read.csv("C:/Users/Computador/Desktop/Projetos no R/Datasets/annual_vgsales.csv",sep=';')
+annual_vgsales %>%
+  plot_ly(x = ~Year, y = ~Global_Sales) %>%
+  add_lines() %>%
+  layout(xaxis=list(showgrid=F), paper_bgcolor="#ebebeb")
+annual_vgsales %>%
+  plot_ly(x = ~Year, y = ~Global_Sales) %>%
+  add_lines() %>%
+  layout(xaxis=list(showgrid=F), paper_bgcolor="red")
+```

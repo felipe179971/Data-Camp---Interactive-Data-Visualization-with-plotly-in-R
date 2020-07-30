@@ -1,0 +1,270 @@
+# Gráficos avançados  
+  
+## Traços de camadas  
+  
+### Adicionando um linear mais suave  
+  
+Você viu como adicionar senhores LOESS a um gráfico de dispersão usando os traços **add_markers()** e **add_lines()**. A adição de um linear mais suave usa a mesma abordagem, mas você usa o **lm()** comando para ajustar o modelo linear.  
+  
+Neste exercício, sua tarefa é adicionar um linear mais suave a um gráfico de dispersão da pontuação do usuário contra a pontuação crítica dos videogames em 2016.  
+  
+Quando você adiciona smoothers, os valores ausentes **NA** podem ser problemáticos porque muitas funções de modelagem excluem automaticamente as observações ausentes. Para evitar esse conflito, use **select()** e **na.omit()** para excluir as observações antes da plotagem. 
+  
+```{r}
+#Ajuste um modelo de regressão linear usando Critic_Score como variável preditora e User_Score como variável de resposta. Armazene este modelo no objeto m.
+m<-lm(User_Score~Critic_Score,data=vgsales2016)
+#Crie um gráfico de dispersão mostrando Critic_Scoreno eixo x e no eixo User_Score y.
+#Adicione um linear mais suave ao seu gráfico de dispersão representando os valores ajustados.
+vgsales2016%>%select(User_Score, Critic_Score)%>%na.omit()%>%plot_ly(x=~Critic_Score,y=~User_Score)%>%add_markers()%>%add_lines(y=~fitted(m))%>%layout(title='Dispersão, selecionando só as variáveis q quero, omitindo NAs e adicionando RegLinear',xaxis=list(title='Nota dos críticos'),yaxis=list(title='Nota dos Usuários'))
+rm(m)
+```
+  
+### Gráficos de densidade sobrepostos  
+  
+Neste exercício, você aprenderá como criar gráficos de densidade e sobrepô-los para comparar a distribuição de pontuações de críticos para três editores de videogame: Activision, Electronic Arts e Nintendo.  
+  
+Para criar um gráfico de densidade para **Global_Sales**, armazene os resultados do **density()** comando e passe as coordenadas **x** e **y** para **add_lines()**:  
+  
+d <- density(vgsales2016$Critic_Score, na.rm = TRUE)  
+plot_ly() %>%  
+  add_lines(x = ~d\$x, y = ~d\$y, fill = 'tozeroy') %>%  
+  layout(xaxis = list(title = 'Critic score'),  
+         yaxis = list(title = 'Density'))  
+  
+Observe como você pode criar novos tipos de plotagem facilmente usando código familiar! O **fill = 'tozeroy'** argumento preenche a área abaixo da curva.  
+  
+```{r}
+#Curvas de densidade de computação para Activision, EA, e Nintendo, armazenando-os na d.a, d.e e d.n objectos, respectivamente.
+
+Activision<-vgsales%>%filter(Publisher=='Activision')
+d.a <-density(Activision$Critic_Score, na.rm = TRUE)
+rm(Activision)
+
+ea<-vgsales%>%filter(Publisher=='Electronic Arts')
+d.e<-density(ea$Critic_Score,na.rm=T)
+rm(ea)
+
+nintendo<-vgsales%>%filter(Publisher=='Nintendo')
+d.n<-density(nintendo$Critic_Score,na.rm=T)
+rm(nintendo)
+#Criar parcelas densidade Overlayed de Critic_Score para activision, ea e nintendo (nessa ordem).
+plot_ly() %>%
+  add_lines(x = ~d.a$x, y = ~d.a$y, name = "Activision", fill = 'tozeroy') %>%
+  add_lines(x = ~d.e$x, y = ~d.e$y, name = "Electronic Arts", fill = 'tozeroy') %>%
+  add_lines(x = ~d.n$x, y = ~d.n$y, name = "Nintendo", fill = 'tozeroy') %>%
+  layout(title='Adicionando linhas ao gráfico (densidade) e pintando a área abaixo',xaxis = list(title = 'Critic Score'),yaxis = list(title = 'Density'))
+rm(d.a,d.e,d.n)
+```
+  
+## Subparcelas  
+  
+### Lapidação manual  
+  
+Lembre-se de que o **subplot()** comando permite combinar gráficos para criar facetas (por exemplo, subtramas ou múltiplos pequenos). Essa é uma ótima maneira de explorar distribuições e relacionamentos entre fatores. Neste exercício, você explorará como a relação entre a pontuação do crítico e a pontuação do usuário muda (ou permanece a mesma) na plataforma.  
+  
+```{r}
+#Crie um gráfico de dispersão mostrando Critic_Score no eixo x e no eixo User_Score y para jogos de PS4. Nomeie o rastreio para a plataforma e armazene esse plot como p1.
+p1 <- vgsales2016 %>%
+   filter(Platform=='PS4') %>%
+   plot_ly(x=~Critic_Score, y=~User_Score) %>% 
+   add_markers(name = 'PS4')
+#Crie um gráfico de dispersão mostrando Critic_Scoreno eixo xe no eixo User_Scorey dos videogames XOne. Nomeie o rastreio para a plataforma e armazene esse plot como p2
+p2 <- vgsales2016 %>%
+   filter(Platform=='XOne') %>%
+   plot_ly(x=~Critic_Score,y=~User_Score) %>% 
+   add_markers(name='XOne')
+#Use subplot() to create a faceted scatterplot containing p1 and p2 with two rows.
+subplot(p1, p2, nrows=2)%>%layout(title='Dispersão, Dois gráficos na mesma Janela',xaxis=list(title='Nota dos críticos'),yaxis=list(title='Nota dos Usuários'))
+rm(p1,p2)
+```
+  
+### Facetamento automatizado  
+  
+No exercício anterior, você cria manualmente um gráfico de dispersão facetado. Isso não foi muito entediante, porque você estava focado apenas em dois grupos. No entanto, existem 9 plataformas no **vgsales2016** conjunto de dados e seria muito tedioso codificar manualmente 9 gráficos de dispersão.  
+  
+Neste exercício, você praticará o uso dos comandos **group_by()** e **do()** para automatizar o processo de criação de um gráfico de dispersão facetado com 12 facetas. Lembre-se de que todo o comando de plotagem está incorporado **do()**, como mostra o modelo abaixo:  
+  
+data %>%  
+  group_by(factor) %>%  
+  do(  
+    plot = plot_ly(data = ., x = ~x, y = ~y) %>%  
+      add_markers(name = ~factor)  
+  ) %>%  
+  subplot(nrows = R, share  
+  
+```{r}
+#Utilização group_by(), do() e subplot() para criar um gráfico de dispersão que mostra facetada Critic_Score no eixo dos x e User_Score no eixo dos y, em que as facetas são definidos por Platform.
+#Organize as facetas em uma grade com 3 linhas.
+vgsales2016 %>%
+  group_by(Platform) %>%
+  do(
+    plot = plot_ly(data = ., x=~Critic_Score, y=~User_Score) %>%
+      add_markers(name = ~Platform)%>%layout(xaxis=list(title='Nota dos críticos'),yaxis=list(title='Nota dos Usuários'))
+  ) %>%
+  subplot(nrows = 3, shareY = TRUE, shareX = TRUE)%>%layout(title='Dispersão, Vários gráficos na mesma Janela (Atumomatizado)')
+```
+  
+### Títulos de plotagem e eixo  
+  
+Nos dois exercícios anteriores, você viu um conjunto de subparcelas sem rótulos de eixo e um conjunto de subparcelas que usavam os nomes de colunas como rótulos de eixo. Por que eles são diferentes? Por padrão, o **subplot()** comando define **titleX = shareX** e **titleY = shareY**; assim, os rótulos dos eixos são exibidos apenas se **shareX** e/ou **shareY** são **TRUE**. Você pode adicionar **titleX = TRUE** e/ou **titleY = TRUE** substituir esse comportamento.  
+  
+Neste exemplo, sua tarefa é adicionar títulos às subparcelas. Observe que **plotly** já foi carregado para você.  
+  
+*Nota: Ao executar sua solução, você verá duas mensagens de aviso sobre como ignorar observações. Essas mensagens simplesmente indicam que __plotly__ está ignorando os valores ausentes.*  
+  
+```{r}
+p1 <- vgsales2016 %>%
+   filter(Platform=='PS4') %>%
+   plot_ly(x=~Critic_Score, y=~User_Score) %>% 
+   add_markers(name = 'PS4')
+p2 <- vgsales2016 %>%
+   filter(Platform=='XOne') %>%
+   plot_ly(x=~Critic_Score,y=~User_Score) %>% 
+   add_markers(name='XOne')
+#Adapte o subplot() código para permitir que os títulos dos eixos x e y sejam compartilhados.
+#Adicione o título "User score vs. critic score by platform, 2016" ao gráfico.
+subplot(p1, p2, nrows = 2, shareY = TRUE, shareX = TRUE) %>%
+   layout(title="User score vs. critic score by platform, 2016")
+rm(p1,p2)
+```
+  
+### Polindo os títulos dos eixos  
+  
+Os eixos em uma subparcela podem ser renomeados usando o **layout()** comando, assim como em uma única plotagem; no entanto, existem vários eixos x para renomear. Por exemplo, uma grade 2 x 2 de plotagens requer quatro rótulos do eixo x:  
+  
+p %>% # subplot  
+   layout(  
+     xaxis = list(title = "title 1"),   
+     xaxis2 = list(title = "title 2"),  
+     xaxis3 = list(title = "title 3"),   
+     xaxis4 = list(title = "title 4")  
+   )  
+  
+Uma estratégia semelhante vale para os rótulos do eixo y.  
+
+Neste exemplo, sua tarefa é polir os títulos dos eixos em uma subparcela.  
+  
+```{r}
+#Para a primeira plotagem sp2, use "Global Sales (M units)" o rótulo do eixo y e deixe o rótulo do eixo x em branco.
+#Para a segunda plotagem sp2, rotule o eixo x e o eixo "Year" y "Global Sales (M units)".
+  #  sp2 %>%
+  # layout(
+  #   xaxis = list(title = ""), 
+  #   xaxis2 = list(title = "Year"),
+  #   yaxis = list(title = "Global Sales (M units)"), 
+  #   yaxis2 = list(title = "Global Sales (M units)")
+  # )
+      #Não temos o código sp2
+```
+  
+## Matrizes de gráfico de dispersão  
+  
+### Seu primeiro SPLOM  
+  
+Qual a relação entre as vendas de videogame norte-americano e europeu? Como as vendas no Japão se comparam à América do Norte e Europa? Neste exercício, você criará uma matriz de gráficos de dispersão (abreviada como SPLOM) para explorar essas questões com base no **vgsales2016** conjunto de dados.  
+  
+```{r}
+#Criar uma matriz de dispersão incluindo NA_Sales, EU_Sales e JP_Sales (nessa ordem).
+#Rotular os painéis N. America, Europe e Japan, respectivamente.
+vgsales2016 %>%
+  plot_ly() %>%
+  add_trace(
+    type = 'splom',
+    dimensions = list(
+      list(label = 'N. America', values = ~NA_Sales),
+      list(label = 'Europe', values = ~EU_Sales),
+      list(label = 'Japan', values = ~JP_Sales)
+    )
+  )%>%layout(title='matriz de gráficos de dispersão (abreviada como SPLOM)')
+```
+
+### Personalizando cores  
+  
+Assim como em um único gráfico de dispersão, pode ser útil adicionar cor para representar uma variável adicional em uma matriz de gráfico de dispersão. Neste exercício, você adicionará cores para representar se o jogo foi produzido pela Nintendo ou não.  
+  
+No código fornecido, uma variável indicadora (ou seja, fictícia) ( **nintendo**) foi criada para indicar se um jogo foi publicado pela Nintendo ou algum outro editor.  
+  
+```{r}
+#Recrie o SPLOM de NA_Sales, EU_Sales e JP_Sales (nessa ordem). Lembre-se de rotular os painéis N. America, Europe e Japan, respectivamente.
+#Use cor para representar os valores em nintendo.
+vgsales2016 %>%
+  mutate(nintendo = ifelse(Publisher == "Nintendo", "Nintendo", "Other")) %>%
+  plot_ly(color=~nintendo) %>% 
+  add_trace(
+    type = 'splom',                                  
+    dimensions = list(
+      list(label = 'N. America', values = ~NA_Sales),
+      list(label = 'Europe', values = ~EU_Sales),
+      list(label = 'Japan', values = ~JP_Sales)
+    )
+  )%>%layout(title='matriz de gráficos de dispersão (abreviada como SPLOM) com corres')
+```
+  
+### Ajustando a aparência  
+  
+Até agora, você usou as configurações padrão para seus SPLOMs. Agora, apresentaremos duas personalizações comuns para explorar:  
+  
+-Excluindo os painéis diagonais.  
+-Exibindo apenas o triângulo superior ou inferior das plotagens.  
+  
+Ambas as personalizações são implementadas adicionando uma **style()** camada.  
+  
+Sua tarefa é estilizar seu SPLOM a partir do exercício anterior para explorar como essas personalizações funcionam.  
+  
+```{r}
+#Exclua os gráficos ao longo da diagonal, definindo o diagonal argumento como uma lista configurada visible como FALSE.
+vgsales2016 %>%
+  mutate(nintendo = ifelse(Publisher == "Nintendo", "Nintendo", "Other")) %>%
+  plot_ly(color=~nintendo) %>% 
+  add_trace(
+    type = 'splom',                                  
+    dimensions = list(
+      list(label = 'N. America', values = ~NA_Sales),
+      list(label = 'Europe', values = ~EU_Sales),
+      list(label = 'Japan', values = ~JP_Sales)
+    )
+  )%>%style(diagonal = list(visible = FALSE))%>%layout(title='matriz de gráficos de dispersão (abreviada como SPLOM) sem diagonal')
+
+#Excluir as parcelas na metade superior da matriz, definindo o showupperhalf argumento para FALSE.
+vgsales2016 %>%
+  mutate(nintendo = ifelse(Publisher == "Nintendo", "Nintendo", "Other")) %>%
+  plot_ly(color=~nintendo) %>% 
+  add_trace(
+    type = 'splom',                                  
+    dimensions = list(
+      list(label = 'N. America', values = ~NA_Sales),
+      list(label = 'Europe', values = ~EU_Sales),
+      list(label = 'Japan', values = ~JP_Sales)
+    )
+  )%>%style(showupperhalf = FALSE)%>%layout(title='matriz de gráficos de dispersão (abreviada como SPLOM) sem metade superior')
+
+#Excluir as parcelas na metade inferior da matriz, definindo o showlowerhalf argumento para FALSE
+vgsales2016 %>%
+  mutate(nintendo = ifelse(Publisher == "Nintendo", "Nintendo", "Other")) %>%
+  plot_ly(color=~nintendo) %>% 
+  add_trace(
+    type = 'splom',                                  
+    dimensions = list(
+      list(label = 'N. America', values = ~NA_Sales),
+      list(label = 'Europe', values = ~EU_Sales),
+      list(label = 'Japan', values = ~JP_Sales)
+    )
+  )%>%style(showlowerhalf = FALSE)%>%layout(title='matriz de gráficos de dispersão (abreviada como SPLOM) sem metade inferior')
+```
+  
+## Gráficos de dispersão em bin  
+  
+### Binning um gráfico de dispersão  
+  
+O conjunto de dados **vgsales** contém 16450 casos (linhas), grandes o suficiente para que os gráficos de dispersão em bin ajudem a evitar a plotagem em excesso. Neste exercício, a sua tarefa é criar um gráfico de dispersão binned de **User_Score** encontro **Critic_Score** para exibir todo o conjunto de dados. (Lembre-se, até agora, que você só exibiu partes deste conjunto de dados como gráficos de dispersão.)  
+  
+Depois de criar o gráfico, não deixe de explorar a interatividade. Especificamente, observe que a entrada "z" nas informações suspensas corresponde ao número de observações na posição escolhida.  
+  
+```{r}
+#Crie um gráfico de dispersão Critic_Score em bin no eixo xe no eixo User_Score y.
+#Defina o número de posições nos eixos x e y como 50.
+vgsales %>%
+  plot_ly(x=~Critic_Score, y=~User_Score) %>%
+  add_histogram2d(nbinsx = 100, nbinsy = 100)%>%layout(title='Dispersão, Calor e com número de pontos controlado',xaxis=list(title='Nota dos críticos'),yaxis=list(title='Nota dos Usuários'))
+
+```

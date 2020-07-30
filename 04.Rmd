@@ -1,0 +1,264 @@
+# Estudo de caso  
+  
+## Introdução aos dados das eleições de 2018  
+  
+### Os eleitores acabaram?  
+  
+Nos Estados Unidos, as eleições de meio de mandato normalmente apresentam menor participação dos eleitores do que as eleições presidenciais. No entanto, com tanto burburinho nas eleições de meio de mandato de 2018, era esperado que a participação fosse maior do que nas eleições de médio prazo anteriores. Foi esse o caso?  
+  
+Sua tarefa é criar um gráfico de dispersão comparando a participação dos eleitores (ou seja, a proporção de eleitores elegíveis que votam) em cada estado entre as eleições de 2014 e 2018.  
+  
+```{r}
+#Crie um gráfico de dispersão exibindo participação em 2014 no eixo x e participação em 2018 no eixo y.
+#Nomeie o eixo x e o eixo "2014 voter turnout" y "2018 voter turnout".
+turnout<-read.csv("C:/Users/Computador/Desktop/Projetos no R/Datasets/turnout.csv",sep=';')
+colnames(turnout)
+turnout %>%plot_ly(x=~turnout2014,y=~turnout2018)%>%add_markers() %>%
+  layout(title='Participação dos Eleitores em Cada Estado Entre as Eleições de 2014 e 2018',xaxis = list(title='2014 voter turnout'),yaxis = list(title='2018 voter turnout'))
+```
+  
+### Adicionando uma linha de referência  
+  
+Embora não tenha sido difícil determinar que proporções mais altas de eleitores elegíveis apareceram em quase todos os estados desde a sua última trama, provavelmente demorou um pouco para você ver isso. As informações suspensas certamente tornam essa tarefa mais fácil, mas a interatividade por si só não é suficiente para tornar essa tarefa "fácil".  
+  
+Então, como você pode ajudar os leitores a digerir seu gráfico mais rapidamente? Adicionando a linha de referência  (y=x). As observações acima dessa linha de referência corresponderão aos estados com maior participação de eleitores em 2018. Em **plotly**, você pode adicionar uma linha conectando dois pontos usando  
+
+add_lines(x = c(x1, x2), y = (y1, y2)).  
+  
+Sua tarefa é adicionar a linha de referência (y=x) ao seu gráfico anterior.  
+  
+```{r}
+#Use add_lines() para adicionar uma linha de referência passando pelos pontos (0,25, 0,25) e (0,6, 0,6).
+#Oculte a legenda adicionada ao gráfico por padrão.
+turnout %>%plot_ly(x=~turnout2014,y=~turnout2018)%>%add_markers() %>%add_lines(x =c(0.25, 0.6) , y = c(0.25, 0.6)) %>%
+  layout(title='Participação dos Eleitores em Cada Estado Entre as Eleições de 2014 e 2018',xaxis = list(title='2014 voter turnout'),yaxis = list(title='2018 voter turnout'))%>%
+  layout(showlegend=F)
+```
+  
+### Qual estado teve a maior participação?  
+  
+As informações de foco instantâneo no gráfico de dispersão anterior permitem determinar qual estado teve a maior participação, mas leva um tempo considerável para comparar a participação entre os estados. Neste exercício, sua tarefa é criar um gráfico de dispersão exibindo o estado no eixo y e a participação dos eleitores no eixo x. Os gráficos de dispersão que exibem uma variável categórica e uma quantitativa são freqüentemente chamados de gráficos de pontos e permitem comparações mais rápidas entre os grupos.  
+  
+O **turnout** conjunto de dados contém informações sobre a proporção de eleitores elegíveis (**turnout**) que votaram nas eleições de meio de mandato de 2018 em cada um **state**.  
+  
+No código de amostra, **turnout %>% top_n(15, wt = turnout)** extrai os 15 estados com as maiores taxas de participação. (top10,top15, maiores)  
+  
+```{r}
+#Para os 15 principais estados, crie um gráfico de pontos (por exemplo, gráfico de dispersão) exibido turnout2018 no eixo x e no eixo state y, onde statefoi reordenado turnout2018.
+#Título do eixo x "Eligible voter turnout".
+#Nomeie o eixo y "State"e defina-o type como category
+turnout %>%
+  top_n(15, wt = turnout2018) %>%
+  plot_ly(x = ~turnout2018, y = ~fct_reorder(state,turnout2018)) %>%
+  add_markers() %>%
+  layout(title='15 Estados com as Maiores Taxas de Participação em 2018',xaxis=list(title='Eligible voter turnout'), 
+         yaxis=list(title='State',type='category'))
+```
+  
+### Quanto foi gasto nas corridas do Senado?  
+  
+O controle do Senado estava em disputa nas eleições de meio de 2018 e, juntamente com a capacidade do presidente Trump de moldar o ramo judicial do governo. Ambos os partidos lutaram arduamente para controlar essa câmara do Congresso, então como isso se traduziu em captação de recursos? Um primeiro passo para entender esta questão é visualizar a distribuição dos fundos recebidos pelos candidatos ao Senado.  
+  
+Sua tarefa é criar um histograma de exibição da distribuição dos fundos recebidos pelos candidatos do Senado durante o ciclo eleitoral de 2018. Quando terminar, tente identificar a corrida com o mais alto nível de captação de recursos.  
+  
+```{r}
+#Filtre para extrair apenas as corridas do escritório do Senado (designadas por "S").
+#Crie um histograma de receipts.
+#Adicione o título "Fundraising for 2018 Senate races" e intitule o eixo x "Total contributions received".
+fundraising<-read.csv("C:/Users/Computador/Desktop/Projetos no R/Datasets/fundraising.csv",sep=';')
+fundraising%>%filter(office=='S')%>%plot_ly(x=~receipts)%>%add_histogram()%>%layout(title='Fundraising for 2018 Senate races',xaxis=list(title='Total contributions received'))
+
+
+```
+  
+### Qual candidato gastou mais?  
+  
+Como você viu, a maioria das campanhas do Senado arrecadou abaixo de US1 milhão e a grande maioria arrecadou abaixo de US20 milhões. Então, quais raças aumentaram esses montantes astronômicos? Histogramas bin observações, obscurecendo a fácil identificação de candidatos individuais, portanto é necessário um gráfico diferente para explorar esta questão.  
+  
+Sua tarefa é criar um gráfico de pontos das 15 campanhas do Senado que levantaram mais dinheiro durante o ciclo eleitoral de 2018. Você também precisará personalizar as informações de foco instantâneo para facilitar a identificação fácil dos candidatos.  
+  
+Concentre-se primeiro na criação do gráfico, mas não deixe de revisar como as informações de foco foram personalizadas!  
+  
+```{r}
+#Use top_n() para extrair os casos correspondentes às 15 campanhas do Senado que levantaram mais dinheiro.
+#Para as 15 principais campanhas, crie um gráfico de pontos (por exemplo, gráfico de dispersão) exibido receiptsno eixo x e no eixo state y, onde state foi reordenado receipts.
+#Altere as cores para que o azul represente democratas (DEM) e o vermelho represente republicanos (REP)
+fundraising$receipts<-as.numeric(fundraising$receipts)
+fundraising %>%
+  filter(office == "S") %>%
+  top_n(15, wt = receipts) %>%
+  plot_ly(x = ~receipts, y = ~fct_reorder(state, receipts),
+          color = ~fct_drop(party),
+          hoverinfo = "text",
+          text = ~paste("Candidate:", name, "<br>",
+                        "Party:", party, "<br>",
+                        "Receipts:", receipts, "<br>",
+                        "Disbursements:", disbursement)) %>%
+  add_markers(colors = c("blue", "red"))%>%layout(title='15 campanhas do Senado que levantaram mais dinheiro durante o ciclo eleitoral de 2018',xaxis=list(title='Receita'), 
+         yaxis=list(title='Stado'))
+
+```
+  
+## Mapas de Coropleth  
+  
+### Mapeando a mudança na participação dos eleitores  
+  
+Você já viu que a participação dos eleitores aumentou em quase todos os estados nas eleições de meio de 2018, em comparação com as de 2014. Neste exercício, sua tarefa é mapear a mudança na participação dos eleitores entre essas duas eleições de meio de mandato.  
+  
+```{r}
+#Use mutate()para adicionar uma change coluna a turnout, que é calculada como a diferença entre a participação em 2018 (turnout2018) e 2014 (turnout2014).
+#Use plot_geo() e add_trace() para criar um mapa detalhado da mudança na participação dos eleitores por estado, mapeando change para z e state.abbr para locations.
+#Restrinja o escopo do mapa ao 'usa' uso layout().
+turnout %>%
+  mutate(change=turnout2018-turnout2014) %>%
+  plot_geo(locationmode = 'USA-states') %>%
+  add_trace(z=~change, locations=~state.abbr) %>%
+  layout(geo = list(scope = 'usa'))
+```
+  
+### Mapeando vencedores do Senado  
+  
+Havia 33 cadeiras no Senado em disputa nas eleições de 2018 (mais duas eleições especiais que ignoraremos neste exercício). Sua tarefa é criar um mapa de cores usando o partido político do candidato vencedor para colorir no estado.  
+  
+Esta tarefa requer que você mapeie um fator para a cor de preenchimento. No entanto, a **z** estética espera uma variável numérica. Uma solução fácil é converter **party** para uma variável numérica **as.numeric(party)** e especificar manualmente as cores desejadas **add_trace()**. Além disso, a barra de cores não é mais muito útil e pode ser removida adicionando a camada **hide_colorbar()**.  
+  
+```{r}
+#Crie um mapa de onde a cor do estado representa a parte vencedora.
+#Em add_trace(), especificar manualmente as cores "dodgerblue", "mediumseagreen"e "tomato"(nessa ordem).
+#Preencha o texto de informações instantâneas com os nomes de coluna apropriados.
+senate_winners<-read.csv("C:/Users/Computador/Desktop/Projetos no R/Datasets/senate_winners.csv",sep=';')
+senate_winners %>%
+  plot_geo(locationmode = 'USA-states') %>%
+  add_trace(z=~as.numeric(party), locations= ~state,
+    colors = c("dodgerblue", "mediumseagreen", "tomato"),
+    hoverinfo = "text",
+    text = ~paste("Candidate:", name, "<br>",
+                  "Party:", party, "<br>",
+                  "% vote:", round(as.numeric(pct.vote), 1))
+  ) %>%
+  layout(geo = list(scope = 'usa')) %>% 
+  hide_colorbar()
+```
+  
+### Adicionando pontos a um mapa  
+  
+Os mapas criados usando **plot_geo()** ainda são objetos de plotagem, para que você possa adicionar camadas adicionais como antes. Neste exercício, você adicionará pontos a um mapa dos Estados Unidos representando os locais em que o presidente Trump realizou comícios para as eleições de meio de mandato de 2018. O conjunto de dados **rallies2018** contém a data, cidade, estado, latitude, longitude e número de pessoas que falaram.
+  
+```{r}
+#Use add_markers() para adicionar pontos representando os comícios no mapa dos EUA. Certifique-se de mapear long para o eixo x, o eixo lat y e no.speakers o tamanho dos pontos.
+#Adicione o título "2018 Trump Rallies".
+#Restrinja o escopo do mapa ao 'usa'.
+rallies2018<-read.csv("C:/Users/Computador/Desktop/Projetos no R/Datasets/rallies2018.csv",sep=';')
+rallies2018 %>%
+  plot_geo(locationmode = 'USA-states') %>%
+  add_markers(
+    x=~long, y=~lat, size=~no.speakers,  
+    hoverinfo = "text", text = ~paste(city, state, sep = ",")
+  ) %>%
+  layout(title = '2018 Trump Rallies', 
+      geo = list(scope = 'usa'))
+
+```
+  
+### Layout geográfico  
+  
+No exercício anterior você viu as configurações padrão para o layout geo no **plotly**, mas isso é muito fácil de personalizar especificando argumentos adicionais na lista passada para **geo** nos **layout()**.   
+  
+Neste exercício, você explorará algumas opções úteis descritas abaixo:  
+  
+- Para alterar a cor da massa terrestre, adicione os argumentos **showland = TRUE** e defina a **landcolor**.  
+- Para diferenciar lagos de massas terrestres, adicione os argumentos **showlakes = TRUE** e defina a **lakecolor**.  
+- Para exibir estados/províncias, conjunto **showsubunit = TRUE** e o conjunto **subunitcolor**.  
+- Para exibir países, conjunto **showcountries = TRUE** e o conjunto **countrycolor**.  
+Observe que você deve usar a **toRGB()** função para passar as cores R para o layout geográfico.  
+  
+```{r}
+#Personalize a aparência do seu mapa a partir do exercício anterior, definindo a lista g e passando-a para o geo layout:
+#Defina a cor da massa terrestre com "gray90".
+#Defina a cor do lago com "white".
+#Defina a cor do estado (subunidade) com "white".
+g <- list(scope = 'usa', 
+          showland = T, landcolor = toRGB("gray90"),
+          showlakes = T, lakecolor = toRGB("white"),
+          showsubunit = T, subunitcolor = toRGB("white"))
+
+# Apply the geo layout to the map
+rallies2018 %>%
+  plot_geo(locationmode = 'USA-states') %>%
+  add_markers(
+    x = ~long, y = ~lat, size = ~no.speakers, 
+    hoverinfo = "text", text = ~paste(city, state, sep = ",")
+  ) %>%
+  layout(title = "2018 Trump Rallies", geo = g)
+rm(g)
+```
+  
+## De polígonos a mapas  
+  
+### Mapeando vencedores do Senado, redux  
+  
+Na última lição, você criou um mapa de choropleth para os resultados do Senado usando **plot_geo()** algumas soluções alternativas. Neste exercício, sua tarefa é recriar esse mapa a partir de polígonos. Ou seja, crie um mapa dos EUA a partir de polígonos e preencha os estados com base no vencedor da corrida no Senado.  
+  
+O **senate_map** quadro de dados e **plotly** já foi carregado para você. **senate_map** contém as informações que você viu anteriormente, juntamente com as informações de limite necessárias para desenhar polígonos de estado.  
+  
+```{r}
+#Crie um mapa choropleth no nível de estado para o qual party é mapeado color e para o qual region é mapeado split.
+#Especifique que as linhas de limite devem ter width = 0.4 e que a legenda não deve ser mostrada.
+senate_map<-read.csv("C:/Users/Computador/Desktop/Projetos no R/Datasets/senate_map.csv",sep=';')
+senate_map %>%
+  group_by(group) %>%
+  plot_ly(x=~long, y=~lat, color=~party, split=~region) %>%
+  add_polygons(line = list(width = 0.4), showlegend = FALSE)
+
+#Definir as cores de polígono para "dodgerblue", "mediumseagreen"e "tomato"na plot_ly()camada.
+#Para desenhar os limites dos estados com NAs para party(ou seja, um estado sem uma corrida no Senado), altere a cor das linhas com toRGB("gray60").
+senate_map %>%
+  group_by(group) %>%
+  plot_ly(x = ~long, y = ~lat, color = ~party, split = ~region,
+          colors=c("dodgerblue", "mediumseagreen","tomato")) %>%
+  add_polygons(line = list(width = 0.4, color=toRGB("gray60")), showlegend = FALSE)
+
+#Para simplificar seu código, defina as opções de layout para remover os títulos dos eixos, a grade, as linhas zero e as marcas de escala como a lista map_axese depois passe essa lista para xaxise yaxis. Complete o código para fazer isso.
+map_axes <- list(title='',showlegend=F,zeroline=F,showgrid=F)
+senate_map %>%
+  group_by(group) %>%
+  plot_ly(x = ~long, y = ~lat, color = ~party, split = ~region,
+          colors = c("dodgerblue", "mediumseagreen", "tomato")) %>%
+  add_polygons(line = list(width = 0.4, color = toRGB("gray60")), showlegend = FALSE) %>%
+  layout(xaxis=map_axes, yaxis=map_axes)
+```
+  
+### Um mapa choropleth em nível de condado  
+  
+A disputa do Senado na Flórida em 2018 foi extremamente controversa e não foi resolvida na noite das eleições. A corrida estava perto demais para ser convocada, e o processo de recontagem foi tão controverso quanto a corrida, com acusações de cédulas mal projetadas que lembram a infame cédula de borboleta nas eleições presidenciais de 2000 e uma série de desafios legais.  
+  
+Neste exercício, sua tarefa é criar um mapa de coropletas no nível do condado da porcentagem dos votos de dois partidos que o candidato republicano Rick Scott (o vencedor final da corrida) recebeu de acordo com o primeiro conjunto de resultados (pré- -recontagem).  
+  
+Os resultados estão em **fl_results** e os limites do condado estão em **fl_boundaries**.  
+  
+```{r}
+#Junte os quadros de dados fl_boundaries e fl_results (nessa ordem). fl_boundaries e fl_results ter diferentes nomes de colunas para os municípios, assim você terá para mapear subregio na CountyName.
+fl_boundaries<-read.csv("C:/Users/Computador/Desktop/Projetos no R/Datasets/fl_boundaries.csv",sep=';')
+fl_results<-read.csv("C:/Users/Computador/Desktop/Projetos no R/Datasets/fl_results.csv",sep=';')
+
+senate_vote <- left_join(fl_boundaries, fl_results, by = c("subregion" = "CountyName"))
+
+#Crie um mapa choropleth no nível do condado, onde os condados sejam coloridos pela porcentagem de eleitores que votaram em Rick Scott.
+#Especifique que as linhas de limite devem ter uma largura de 0,4 e que a legenda não deve ser mostrada.
+senate_vote %>%
+  group_by(group) %>%
+  plot_ly(x = ~as.numeric(long), y = ~as.numeric(lat), 
+          color = ~Pctvote,
+          split = ~subregion) %>%
+  add_polygons(line = list(width=0.4), showlegend=F, colors = c("blue", "red"))
+
+#Defina as configurações de layout do eixo map_axes para remover os títulos, linhas de grade, linhas zero e marcas de escala e passar essa lista para os layouts xaxis e yaxis
+map_axes <- list(title='',showlegend=F,zeroline=F,showgrid=F)
+senate_vote %>%
+  group_by(group) %>%
+  plot_ly(x = ~as.numeric(long), y = ~as.numeric(lat), 
+          color = ~Pctvote,
+          split = ~subregion) %>%
+  add_polygons(line = list(width = 0.4), showlegend = FALSE, colors = c("blue", "red")) %>%
+  layout(xaxis = map_axes, yaxis = map_axes)
+```

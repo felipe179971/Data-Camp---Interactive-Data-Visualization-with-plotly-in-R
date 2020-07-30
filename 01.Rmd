@@ -1,0 +1,107 @@
+# Introdução ao plotly  
+  
+## O que é Plotly?  
+  
+### Convertendo um gráfico de dispersão ggplot2  
+  
+O **ggplotly()** comando facilita a criação de versões interativas da maioria dos gráficos estáticos criados usando o **ggplot2** pacote. Neste exercício, sua tarefa é criar uma versão interativa do gráfico de dispersão abaixo, explorando a relação entre as vendas de videogames na América do Norte (**NA_sales**) e a pontuação crítica agregada (**Critic_Score**) em 2016.  
+  
+Depois de criar o gráfico interativo, certifique-se de explorar quais interações são possíveis.  
+  
+Nota: o carregamento **plotly** também carrega **ggplot2** e **dplyr** .  
+  
+```{r}
+vgsales<-read.csv("C:/Users/Computador/Desktop/Projetos no R/Datasets/vgsales.csv",sep=';')
+#Carregar plotly
+
+#Crie um gráfico de dispersão com NA_Sales no eixo x e no eixo Critic_Score y para jogos de vídeo encontrados no vgsales conjunto de dados de 2016. Armazene esse gráfico no scatter objeto.
+scatter<-vgsales%>%filter(Year==2016)%>%ggplot(aes(x = NA_Sales, y = Critic_Score)) +
+			geom_point(alpha = 0.3)
+#Use o ggplotly()comando para converter scatterem um plotly gráfico interativo.
+ggplotly(scatter)
+rm(scatter)
+```
+  
+## Gráficos univariados  
+  
+### Histogramas  
+  
+Neste exercício, você utilizará **plotly** para criar um histograma do zero, a fim de explorar a distribuição das pontuações críticas dos videogames vendidos entre 1980 e 2016. Os dados estão contidos na C**ritic_Score** variável no **vgsales** quadro de dados.  
+  
+Ao concluir este exercício, pense em como os compartimentos influenciam o que você vê na distribuição das pontuações dos críticos.  
+  
+```{r}
+#Crie um histograma da pontuação do crítico ( Critic_Score) usando o número padrão de posições.
+vgsales%>%plot_ly(x=~Critic_Score)%>%add_histogram()
+#Crie um histograma da pontuação do crítico ( Critic_Score) definindo o número máximo de posições para 25.
+vgsales%>%plot_ly(x=~Critic_Score)%>%add_histogram(nbisx=25)
+#Crie um histograma da pontuação do crítico ( Critic_Score) configurando a largura da bandeja para 10, começando em 0 e terminando em 100.
+vgsales%>%plot_ly(x=~Critic_Score)%>%add_histogram(nbisx=list(start=0, end=100, size=10))
+```
+  
+### Gráficos de barra    
+   
+Neste exercício, você usará **plotly** para criar um gráfico de barras do zero, a fim de explorar a distribuição dos gêneros de videogame representados nos jogos vendidos entre 1980 e 2016.  
+  
+Os dados para esse gráfico de barras estão contidos na **Genre** coluna do **vgsales** quadro de dados.  
+  
+```{r}
+# Use count()para criar uma tabela de frequências de Genre.
+genre_table <- vgsales%>%count(Genre)
+    #Ou
+genre_table <- as.data.frame.table(table(vgsales$Genre))
+#Use genre_table para criar um gráfico de barras de Genre
+genre_table%>%plot_ly(x=~Var1,y=~Freq)%>%add_bars()%>%layout(title = "Gráfico de barras",xaxis = list(title = "Genre"),yaxis = list(title = "n"))
+#Reordene o gráfico de barras em ordem decrescente (da barra mais alta para a menor) para melhorar a legibilidade. (Ordenar/Reordenar gráfico de barras)
+genre_table %>%
+	mutate(Var1 = fct_reorder(Var1, Freq,.desc = T)) %>%
+	plot_ly(x = ~Var1, y = ~Freq) %>% 
+	add_bars()%>%layout(title = "Gráfico de barras Ordenado",xaxis = list(title = "Genre"),yaxis = list(title = "n"))     
+rm(genre_table)
+  
+```
+  
+## Gráficos bivariados  
+  
+### Um primeiro gráfico de dispersão   
+  
+Os jogadores e críticos de videogame classificam os jogos da mesma forma? Neste exercício, você criará um gráfico de dispersão **plotly** para explorar a relação entre a pontuação média do jogador (**User_Score**) e a pontuação média do crítico ( **Critic_Score**).  
+  
+Se você vir algo incomum, não deixe de utilizar as ferramentas interativas, como informações instantâneas, para investigar.  
+  
+```{r}
+#Crie um gráfico de dispersão com a pontuação crítica ( Critic_Score) no eixo x e a pontuação do usuário ( User_Score) no eixo y. 
+vgsales%>%plot_ly(x=~Critic_Score,y=~User_Score)%>%add_markers()%>%layout(title='Gráfico de dispersão',xaxis=list(title=' Nota dos Críticos de Videogame'),yaxis=list(title='Notas dos Jogadores de Videogame'))
+```
+  
+### Um primeiro gráfico de barras empilhadas    
+  
+Neste exercício, sua tarefa é criar um gráfico de barras empilhadas para investigar se há uma associação entre os jogos **Genre** e os **Rating** de vídeo.  
+  
+Certifique-se de investigar o que acontece quando você clica nas amostras de cores na legenda.  
+  
+  
+```{r}
+#Crie um gráfico de barras empilhadas com Genreo eixo x e Ratinguse para colorir as barras. (Ano de 2016)
+# Filter out the 2016 video games
+vgsales%>%filter(Year==2016)%>%count(Genre, Rating)%>%plot_ly(x = ~Genre, y = ~n, color = ~Rating)%>%add_bars() %>%layout(barmode = "stack",title='Gráfico de Barras Empilhado', xaxis=list(title='Gênero'), yaxis=list(title='Frequência'))
+    #Ou usando Table (melhor fazer com count)
+vgsales_2016<-vgsales%>%filter(Year==2016)
+vgsales_2016<-as.data.frame.table(table(vgsales_2016$Genre, vgsales_2016$Rating))
+vgsales_2016<-vgsales_2016%>%filter(Freq!=0)
+colnames(vgsales_2016)<-c('Genre','Rating','n')
+vgsales_2016%>%plot_ly(x = ~Genre, y = ~n, color = ~Rating)%>%add_bars() %>%layout(barmode = "stack",title='Gráfico de Barras Empilhado', xaxis=list(title='Gênero'), yaxis=list(title='Frequência'))
+#Apagando data.frame provisório
+rm(vgsales_2016)
+```
+  
+### Boxplots  
+  
+Neste exercício, sua tarefa é criar um boxplot de vendas globais de videogame (o número de unidades vendidas) para cada gênero. O gênero parece estar relacionado às vendas?  
+  
+Certifique-se de explorar quais informações de foco são fornecidas por padrão.  
+  
+```{r}
+#Crie gráficos de caixas lado a lado com Global_Saleso eixo xe o eixo Genrey. (Ano de 2016)
+vgsales%>%filter(Year==2016)%>%plot_ly(x=~Global_Sales,y=~Genre)%>%add_boxplot()%>%layout(title='Boxplot',xaxis=list(title='Número de Unidades Vendidas'),yaxis=list(title='Gênero'))
+```

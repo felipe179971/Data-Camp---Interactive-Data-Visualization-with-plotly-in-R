@@ -1,0 +1,24 @@
+--- 
+title: "Data Camp - Interactive Data Visualization with plotly in R"
+author: "Felipe da Rocha Ferreira"
+date: "`r Sys.Date()`"
+site: bookdown::bookdown_site
+documentclass: book
+bibliography: [book.bib, packages.bib]
+biblio-style: apalike
+link-citations: yes
+description: "https://learn.datacamp.com/courses/interactive-data-visualization-with-plotly-in-r"
+---
+
+# Introdução  
+  
+Os gráficos interativos permitem manipular dados plotados para obter mais informações. Como exemplo, um gráfico interativo permitiria ampliar um subconjunto de seus dados sem a necessidade de criar um novo gráfico. Neste curso, você aprenderá como criar e personalizar gráficos interativos em plotagem usando a linguagem de programação R. Ao longo do caminho, você revisará as práticas recomendadas de visualização de dados e será apresentado a novos tipos de plotagem, como matrizes de gráficos de dispersão e gráficos de dispersão em bin.  
+  
+# Carregando pacotes  
+  
+```{r}
+library(plotly)
+library(dplyr)
+library(ggplot2)
+library(forcats)
+```
